@@ -1,17 +1,22 @@
-# `replaceme` [![Build Status](https://github.com/REPLACEME-AUTHOR-SLASH-REPO/workflows/CI/badge.svg)](https://github.com/REPLACEME-AUTHOR-SLASH-REPO/actions?query=branch%3Amain)
+# `elm-oklch` [![Build Status](https://github.com/miniBill/elm-oklch/workflows/CI/badge.svg)](https://github.com/miniBill/elm-oklch/actions?query=branch%3Amain)
+This package implements the [OKLCH and OKLAB](https://bottosson.github.io/posts/oklab/) color spaces for Elm.
 
-## What this repo includes
+{{Replace link below with the simplest meaningful demo of your Elm package on https://ellie-app.com/ }}
 
-| What                                                              | Why?                                                                                                                                                                                                          |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| lydell/elm-tooling.json                                           | Install dependencies, cache them for faster GitHub Actions builds.                                                                                                                                            |
-| elm-test                                                          | Basic unit testing boilerplate and runs on GitHub Actions.                                                                                                                                                    |
-| [`jfmengels/elm-review`](https://github.com/jfmengels/elm-review) | Statically analyzes your code to find unused code, etc.                                                                                                                                                       |
-| dillonkearns/elm-publish-action                                   | Publishes your package whenever you bump your package version in elm.json on your default branch (`main` or `master`). It won't publish 1.0.0 for you, but it will release subsequent versions automatically. |
+See an [example in action on Ellie]({{YOUR LINK HERE}}).
 
-## Checklist
+See more end-to-end example code in the `examples/` folder.
 
-- [ ] Replace this with a nice readme (see this guide for designing Elm packages and writing nice docs/READMEs: <https://github.com/dillonkearns/idiomatic-elm-package-guide>)
-- [ ] Find all instances of replaceme in this repo and replace them
-- [ ] Add a file called `LICENSE` to the top-level folder. This is required to publish an Elm package. The most common and recommended license for open source Elm packages is BSD-3.
-- [ ] Publish version 1.0.0 (you have to start at V1 with Elm packages). Run `elm publish` from the root folder of this repo when you're all ready, and it will walk you through the process!
+## Design Goals
+
+{{
+See the [State Your Design Goals section from the README](https://github.com/dillonkearns/idiomatic-elm-package-guide#explicitly-state-design-goals-in-your-readme) }}
+
+## Overview
+
+```elm
+{{Inline code snippet showcasing the simplest possible
+    meaningful demo of your Elm package.}}
+```
+
+* Link to a live [Ellie](https://ellie-app.com/) Demo
