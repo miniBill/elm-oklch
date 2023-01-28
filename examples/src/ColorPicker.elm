@@ -249,11 +249,18 @@ oklabToOklch ( l, a, b ) =
         c =
             sqrt (a * a + b * b)
 
+        h_ =
+            atan2 b a * 180 / pi
+
         h : Float
         h =
-            atan2 b a
+            if h_ < 0 then
+                2 * pi + h_
+
+            else
+                h_
     in
-    ( l, c, h )
+    ( l * 100, c, h )
 
 
 oklchToOklab : Float3 -> Float3
@@ -261,13 +268,13 @@ oklchToOklab ( l, c, h ) =
     let
         a : Float
         a =
-            c * cos h
+            c * cos (degrees h)
 
         b : Float
         b =
-            c * sin h
+            c * sin (degrees h)
     in
-    ( l, a, b )
+    ( l / 100, a, b )
 
 
 view : Model -> Element Msg
