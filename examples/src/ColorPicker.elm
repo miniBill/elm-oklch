@@ -1,7 +1,7 @@
 module ColorPicker exposing (main)
 
 import Browser
-import Element exposing (Attribute, Element, alignRight, centerY, column, el, fill, height, px, row, shrink, table, text, width)
+import Element exposing (Attribute, Element, Length, alignRight, centerY, column, el, fill, height, px, shrink, table, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -23,6 +23,7 @@ type alias Model =
     , linearRGB : String3 -- RGB
     , oklab : String3 -- Lab
     , oklch : String3 -- Lch
+    , paletteCount : String
     }
 
 
@@ -31,6 +32,7 @@ type Msg
     | FromLinearRGB String3
     | FromOklab String3
     | FromOklch String3
+    | PaletteCount String
 
 
 main : Program () Model Msg
@@ -54,15 +56,11 @@ layoutStyle =
 
 init : Model
 init =
-    { sRGB = transform linearToSRGB ( 0, 0, 0 )
-    , linearRGB = ( "0", "0", "0" )
-    , oklab = transform3 linearToOklab ( 0, 0, 0 )
-    , oklch = transform3 (linearToOklab >> oklabToOklch) ( 0, 0, 0 )
-    }
+    linearToModel "10" ( 0, 0, 0 )
 
 
-linearToModel : Float3 -> Model
-linearToModel linearRGB =
+linearToModel : String -> Float3 -> Model
+linearToModel paletteCount linearRGB =
     let
         oklab : Float3
         oklab =
@@ -72,6 +70,7 @@ linearToModel linearRGB =
     , linearRGB = toString3 linearRGB
     , oklab = toString3 oklab
     , oklch = transform3 oklabToOklch oklab
+    , paletteCount = paletteCount
     }
 
 
@@ -82,7 +81,7 @@ from input toLinear model =
             model
 
         Just parsed ->
-            linearToModel (toLinear parsed)
+            linearToModel model.paletteCount (toLinear parsed)
 
 
 fromSRGB : String3 -> Model -> Model
@@ -255,12 +254,12 @@ oklabToOklch ( l, a, b ) =
         h : Float
         h =
             if h_ < 0 then
-                2 * pi + h_
+                360 + h_
 
             else
                 h_
     in
-    ( l * 100, c, h )
+    ( l, c, h )
 
 
 oklchToOklab : Float3 -> Float3
@@ -274,63 +273,123 @@ oklchToOklab ( l, c, h ) =
         b =
             c * sin (degrees h)
     in
-    ( l / 100, a, b )
+    ( l, a, b )
 
 
 view : Model -> Element Msg
-view { sRGB, linearRGB, oklab, oklch } =
-    [ viewTriple
-        { space = "sRGB"
-        , labels = ( "R", "G", "B" )
-        , toMsg = FromSRGB
-        , styles = [ toStyles "rgb" (\( r, g, b ) -> [ pc r, pc g, pc b ]) sRGB ]
-        , value = sRGB
-        }
-    , viewTriple
-        { space = "linear RGB"
-        , labels = ( "R", "G", "B" )
-        , toMsg = FromLinearRGB
-        , styles = [ toStyles "rgb" (\( r, g, b ) -> [ pc r, pc g, pc b ]) {- Not a typo -} sRGB ]
-        , value = linearRGB
-        }
-    , viewTriple
-        { space = "Oklab"
-        , labels = ( "L", "a", "b" )
-        , toMsg = FromOklab
-        , styles =
-            [ toStyles "oklab" (\( l, a, b ) -> [ pc l, float a, float b ]) oklab
-            , toStyles "rgb"
-                (\v ->
-                    let
-                        ( r, g, b ) =
-                            triple linearToSRGB <| oklabToLinear v
-                    in
-                    [ pc r, pc g, pc b ]
-                )
-                oklab
+view { sRGB, linearRGB, oklab, oklch, paletteCount } =
+    let
+        triples :
+            List
+                { space : String
+                , labels : String3
+                , toMsg : String3 -> Msg
+                , styles : List String
+                , value : String3
+                }
+        triples =
+            [ { space = "sRGB"
+              , labels = ( "R", "G", "B" )
+              , toMsg = FromSRGB
+              , styles = [ toStyles "rgb" (\( r, g, b ) -> [ pc r, pc g, pc b ]) sRGB ]
+              , value = sRGB
+              }
+            , { space = "linear RGB"
+              , labels = ( "R", "G", "B" )
+              , toMsg = FromLinearRGB
+              , styles = [ toStyles "rgb" (\( r, g, b ) -> [ pc r, pc g, pc b ]) {- Not a typo -} sRGB ]
+              , value = linearRGB
+              }
+            , { space = "Oklab"
+              , labels = ( "L", "a", "b" )
+              , toMsg = FromOklab
+              , styles =
+                    [ toStyles "oklab" (\( l, a, b ) -> [ pc l, float a, float b ]) oklab
+                    , toStyles "rgb"
+                        (\v ->
+                            let
+                                ( r, g, b ) =
+                                    triple linearToSRGB <| oklabToLinear v
+                            in
+                            [ pc r, pc g, pc b ]
+                        )
+                        oklab
+                    ]
+              , value = oklab
+              }
+            , { space = "Oklch"
+              , labels = ( "L", "C", "H" )
+              , toMsg = FromOklch
+              , styles =
+                    [ toStyles "lklch" (\( l, c, h ) -> [ pc l, float c, float h ]) oklch
+                    , toStyles "rgb"
+                        (\v ->
+                            let
+                                ( r, g, b ) =
+                                    triple linearToSRGB <| oklabToLinear <| oklchToOklab v
+                            in
+                            [ pc r, pc g, pc b ]
+                        )
+                        oklch
+                    ]
+              , value = oklch
+              }
             ]
-        , value = oklab
-        }
-    , viewTriple
-        { space = "Oklch"
-        , labels = ( "L", "C", "H" )
-        , toMsg = FromOklch
-        , styles =
-            [ toStyles "lklch" (\( l, c, h ) -> [ pc l, float c, float h ]) oklch
-            , toStyles "rgb"
-                (\v ->
-                    let
-                        ( r, g, b ) =
-                            triple linearToSRGB <| oklabToLinear <| oklchToOklab v
-                    in
-                    [ pc r, pc g, pc b ]
-                )
-                oklch
-            ]
-        , value = oklch
-        }
-    ]
-        |> row [ Theme.spacing ]
+    in
+    column [ Theme.spacing ]
+        [ List.map viewTriple triples
+            |> wrappedRow [ Theme.spacing ]
+        , viewPalette paletteCount oklch
+        ]
+
+
+viewPalette : String -> String3 -> Element Msg
+viewPalette paletteCount oklch =
+    let
+        paletteCountInt : Int
+        paletteCountInt =
+            String.toInt paletteCount
+                |> Maybe.withDefault 10
+    in
+    column
+        [ Border.width 1
+        , Border.rounded Theme.rythm
+        , Theme.padding
+        , Theme.spacing
+        , width <| Element.minimum 300 fill
+        ]
+        [ text "Palette"
+        , Theme.input []
+            { label = Input.labelLeft [] <| text "Size"
+            , onChange = PaletteCount
+            , placeholder = Just <| Input.placeholder [] <| text "10"
+            , text = paletteCount
+            }
+        , case parse oklch of
+            Just ( l, c, _ ) ->
+                List.range 1 paletteCountInt
+                    |> List.map
+                        (\i ->
+                            let
+                                hue =
+                                    toFloat i * 360 / toFloat paletteCountInt
+
+                                ( r, g, b ) =
+                                    ( l, c, hue )
+                                        |> oklchToOklab
+                                        |> oklabToLinear
+                                        |> triple linearToSRGB
+                            in
+                            viewColor { width = px 40, height = px 40 } [ "rgb(" ++ String.join " " [ pc r, pc g, pc b ] ++ ")" ]
+                        )
+                    |> wrappedRow
+                        [ Theme.spacing
+                        , width fill
+                        ]
+
+            Nothing ->
+                Element.none
+        ]
 
 
 toStyles : String -> (( Float, Float, Float ) -> List String) -> String3 -> String
@@ -351,10 +410,6 @@ pc v =
 float : Float -> String
 float v =
     String.fromFloat v
-
-
-
--- viewTriple : String -> String -> String -> String -> (String3 -> Msg) -> (String3 -> List String) -> String3 -> Element Msg
 
 
 viewTriple :
@@ -386,6 +441,7 @@ viewTriple { space, labels, toMsg, styles, value } =
     in
     column
         [ Border.width 1
+        , Border.rounded Theme.rythm
         , Theme.padding
         , Theme.spacing
         , width <| px 300
@@ -410,19 +466,25 @@ viewTriple { space, labels, toMsg, styles, value } =
                   }
                 ]
             }
-        , el
-            ([ width fill
-             , height <| px 40
-             , Border.width 1
-             ]
-                ++ List.map
-                    (\s ->
-                        Element.htmlAttribute (Html.Attributes.style "background" s)
-                    )
-                    styles
-            )
-            Element.none
+        , viewColor { width = fill, height = px 40 } styles
         ]
+
+
+viewColor : { height : Length, width : Length } -> List String -> Element Msg
+viewColor size styles =
+    el
+        ([ width size.width
+         , height size.height
+         , Border.width 1
+         , Border.rounded Theme.rythm
+         ]
+            ++ List.map
+                (\s ->
+                    Element.htmlAttribute (Html.Attributes.style "background" s)
+                )
+                styles
+        )
+        Element.none
 
 
 update : Msg -> Model -> Model
@@ -439,3 +501,6 @@ update msg model =
 
         FromOklch value ->
             fromOklch value model
+
+        PaletteCount paletteCount ->
+            { model | paletteCount = paletteCount }

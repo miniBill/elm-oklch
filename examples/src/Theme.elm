@@ -2,6 +2,7 @@ module Theme exposing (colors, input, padding, rythm, spacing)
 
 import Element exposing (Attribute, Color, Element)
 import Element.Background as Background
+import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 
@@ -41,4 +42,9 @@ input :
         }
     -> Element msg
 input attrs =
-    Input.text (Background.color colors.background :: Font.color colors.foreground :: attrs)
+    Input.text
+        (Background.color colors.background
+            :: Font.color colors.foreground
+            :: Border.rounded rythm
+            :: attrs
+        )
