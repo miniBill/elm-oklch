@@ -67,6 +67,7 @@ fromOklab { lightness, a, b, alpha } =
         chroma =
             sqrt (a * a + b * b)
 
+        hue_ : Float
         hue_ =
             atan2 b a / (pi * 2)
 
