@@ -5,13 +5,12 @@ import Color exposing (Color)
 import Color.LinearRGB exposing (LinearRGB)
 import Color.Oklab exposing (Oklab)
 import Color.Oklch exposing (Oklch)
-import Element exposing (Attribute, Element, Length, alignRight, centerY, column, el, fill, height, px, shrink, table, text, width, wrappedRow)
+import Element exposing (Attribute, Element, Length, alignRight, centerY, column, el, fill, height, padding, px, shrink, spacing, table, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input
 import Html.Attributes
-import Theme
 
 
 type alias Float3 =
@@ -52,10 +51,17 @@ layoutStyle : List (Attribute Msg)
 layoutStyle =
     [ width fill
     , height fill
-    , Background.color Theme.colors.background
-    , Font.color Theme.colors.foreground
-    , Theme.padding
+    , Background.color colors.background
+    , Font.color colors.foreground
+    , padding 10
     ]
+
+
+colors : { foreground : Element.Color, background : Element.Color }
+colors =
+    { foreground = Element.rgb 0.8 0.8 0.8
+    , background = Element.rgb 0.15 0.15 0.15
+    }
 
 
 init : Model
@@ -245,16 +251,16 @@ view { sRGB, linearRGB, oklab, oklch, paletteCount } =
               }
             ]
     in
-    column [ Theme.spacing ]
+    column [ spacing 10 ]
         [ List.map viewTriple triples
-            |> wrappedRow [ Theme.spacing ]
+            |> wrappedRow [ spacing 10 ]
         , viewPalette paletteCount oklch
         ]
 
 
 toStyles2 : String3 -> (( Float, Float, Float ) -> Color.Color) -> String
-toStyles2 input conversion =
-    input
+toStyles2 toParse conversion =
+    toParse
         |> parse
         |> Maybe.withDefault ( 0, 0, 0 )
         |> conversion
@@ -271,13 +277,13 @@ viewPalette paletteCount oklch =
     in
     column
         [ Border.width 1
-        , Border.rounded Theme.rythm
-        , Theme.padding
-        , Theme.spacing
+        , Border.rounded 10
+        , padding 10
+        , spacing 10
         , width <| Element.minimum 300 fill
         ]
         [ text "Palette"
-        , Theme.input []
+        , input []
             { label = Input.labelLeft [] <| text "Size"
             , onChange = PaletteCount
             , placeholder = Just <| Input.placeholder [] <| text "10"
@@ -299,13 +305,31 @@ viewPalette paletteCount oklch =
                             viewColor { width = px 40, height = px 40 } [ Color.toCssString color ]
                         )
                     |> wrappedRow
-                        [ Theme.spacing
+                        [ spacing 10
                         , width fill
                         ]
 
             Nothing ->
                 Element.none
         ]
+
+
+input :
+    List (Attribute msg)
+    ->
+        { onChange : String -> msg
+        , text : String
+        , placeholder : Maybe (Input.Placeholder msg)
+        , label : Input.Label msg
+        }
+    -> Element msg
+input attrs =
+    Input.text
+        (Background.color colors.background
+            :: Font.color colors.foreground
+            :: Border.rounded 10
+            :: attrs
+        )
 
 
 toStyles : String -> (( Float, Float, Float ) -> List String) -> String3 -> String
@@ -347,7 +371,7 @@ viewTriple { space, labels, toMsg, styles, value } =
         line : String -> String -> (String -> String3) -> ( Element Msg, Element Msg )
         line l v f =
             ( el [ centerY ] <| text l
-            , Theme.input [ width fill ]
+            , input [ width fill ]
                 { label = Input.labelHidden l
                 , onChange = \newValue -> toMsg (f newValue)
                 , text = v
@@ -357,14 +381,14 @@ viewTriple { space, labels, toMsg, styles, value } =
     in
     column
         [ Border.width 1
-        , Border.rounded Theme.rythm
-        , Theme.padding
-        , Theme.spacing
+        , Border.rounded 10
+        , padding 10
+        , spacing 10
         , width <| px 300
         ]
         [ table
             [ width fill
-            , Theme.spacing
+            , spacing 10
             ]
             { data =
                 [ line label0 value0 (\v -> ( v, value1, value2 ))
@@ -392,7 +416,7 @@ viewColor size styles =
         ([ width size.width
          , height size.height
          , Border.width 1
-         , Border.rounded Theme.rythm
+         , Border.rounded 10
          ]
             ++ List.map
                 (\s ->

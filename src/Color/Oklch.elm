@@ -108,12 +108,16 @@ toOklab { lightness, chroma, hue, alpha } =
     }
 
 
+{-| Convert a color from [`Color`](https://package.elm-lang.org/packages/avh4/elm-color/1.0.0/Color#Color) (sRGB) to Oklch.
+-}
 fromColor : Color -> Oklch
 fromColor color =
     Color.Oklab.fromColor color
         |> fromOklab
 
 
+{-| Convert a color from Oklch to [`Color`](https://package.elm-lang.org/packages/avh4/elm-color/1.0.0/Color#Color) (sRGB).
+-}
 toColor : Oklch -> Color
 toColor color =
     toOklab color

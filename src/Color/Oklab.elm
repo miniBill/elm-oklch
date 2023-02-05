@@ -37,12 +37,16 @@ type alias Oklab =
     }
 
 
+{-| Convert a color from [`Color`](https://package.elm-lang.org/packages/avh4/elm-color/1.0.0/Color#Color) (sRGB) to Oklab.
+-}
 fromColor : Color -> Oklab
 fromColor color =
     Color.LinearRGB.fromColor color
         |> fromLinearRGB
 
 
+{-| Convert a color from Oklab to [`Color`](https://package.elm-lang.org/packages/avh4/elm-color/1.0.0/Color#Color) (sRGB).
+-}
 toColor : Oklab -> Color
 toColor color =
     toLinearRGB color
