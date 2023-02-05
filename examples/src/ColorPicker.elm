@@ -109,8 +109,8 @@ oklchToStrings { lightness, chroma, hue } =
 
 
 from : String3 -> (Float3 -> LinearRGB) -> Model -> Model
-from input toLinear model =
-    case parse input of
+from toParse toLinear model =
+    case parse toParse of
         Nothing ->
             model
 

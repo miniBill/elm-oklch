@@ -29,6 +29,14 @@ import Color exposing (Color)
 import Color.LinearRGB exposing (LinearRGB)
 
 
+{-| A color in the Oklab space.
+
+  - `lightness` ranges from 0.0 to 1.0 (inclusive),
+  - `a` (green/red) ranges from approximatively -0.3 to +0.3,
+  - `b` (blue/yellow) ranges from approximatively -0.3 to +0.3,
+  - `alpha` ranges from 0.0 to 1.0 (inclusive).
+
+-}
 type alias Oklab =
     { lightness : Float
     , a : Float
@@ -53,6 +61,13 @@ toColor color =
         |> Color.LinearRGB.toColor
 
 
+{-| Builds a color from its lightness, a (green/red) and b (blue/yellow) components.
+
+  - `lightness` ranges from 0.0 to 1.0 (inclusive),
+  - `a` (green/red) ranges from approximatively -0.3 to +0.3,
+  - `b` (blue/yellow) ranges from approximatively -0.3 to +0.3.
+
+-}
 oklab : Float -> Float -> Float -> Oklab
 oklab lightness a b =
     { lightness = lightness
@@ -62,6 +77,14 @@ oklab lightness a b =
     }
 
 
+{-| Builds a color from its lightness, a (green/red), b (blue/yellow) and alpha components.
+
+  - `lightness` ranges from 0.0 to 1.0 (inclusive),
+  - `a` (green/red) ranges from approximatively -0.3 to +0.3,
+  - `b` (blue/yellow) ranges from approximatively -0.3 to +0.3,
+  - `alpha` ranges from 0.0 to 1.0 (inclusive).
+
+-}
 oklaba : Float -> Float -> Float -> Float -> Oklab
 oklaba lightness a b alpha =
     { lightness = lightness

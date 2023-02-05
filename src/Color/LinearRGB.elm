@@ -27,6 +27,9 @@ import Color exposing (Color)
 
 
 {-| Represents a color in the linear RGB space.
+
+All components range from 0.0 to 1.0 (inclusive).
+
 -}
 type alias LinearRGB =
     { linearRed : Float
@@ -36,6 +39,11 @@ type alias LinearRGB =
     }
 
 
+{-| Builds a color from red, green and blue components.
+
+All components range from 0.0 to 1.0 (inclusive).
+
+-}
 linearRgb : Float -> Float -> Float -> LinearRGB
 linearRgb linearRed linearGreen linearBlue =
     { linearRed = linearRed
@@ -45,6 +53,11 @@ linearRgb linearRed linearGreen linearBlue =
     }
 
 
+{-| Builds a color from red, green, blue and alpha components.
+
+All components range from 0.0 to 1.0 (inclusive).
+
+-}
 linearRgba : Float -> Float -> Float -> Float -> LinearRGB
 linearRgba linearRed linearGreen linearBlue alpha =
     { linearRed = linearRed

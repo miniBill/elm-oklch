@@ -29,6 +29,14 @@ import Color exposing (Color)
 import Color.Oklab exposing (Oklab)
 
 
+{-| A color in the Oklch space.
+
+  - `lightness` ranges from 0.0 to 1.0 (inclusive),
+  - `chroma` ranges from 0.0 to approximatively 0.37 (inclusive),
+  - `hue` ranges from 0.0 to 1.0 (inclusive),
+  - `alpha` ranges from 0.0 to 1.0 (inclusive).
+
+-}
 type alias Oklch =
     { lightness : Float
     , chroma : Float
@@ -37,6 +45,14 @@ type alias Oklch =
     }
 
 
+{-| Builds a color from its lightness, chroma and hue components.
+
+  - `lightness` ranges from 0.0 to 1.0 (inclusive),
+  - `chroma` ranges from 0.0 to approximatively 0.37 (inclusive),
+  - `hue` ranges from 0.0 to 1.0 (inclusive),
+  - `alpha` ranges from 0.0 to 1.0.
+
+-}
 oklch : Float -> Float -> Float -> Oklch
 oklch lightness chroma hue =
     { lightness = lightness
@@ -46,6 +62,14 @@ oklch lightness chroma hue =
     }
 
 
+{-| Builds a color from its lightness, chroma, hue and alpha components.
+
+  - `lightness` ranges from 0.0 to 1.0 (inclusive),
+  - `chroma` ranges from 0.0 to approximatively 0.37 (inclusive),
+  - `hue` ranges from 0.0 to 1.0 (inclusive),
+  - `alpha` ranges from 0.0 to 1.0.
+
+-}
 oklcha : Float -> Float -> Float -> Float -> Oklch
 oklcha lightness chroma hue alpha =
     { lightness = lightness
@@ -56,9 +80,6 @@ oklcha lightness chroma hue alpha =
 
 
 {-| Convert from Oklab to Oklch.
-
-Output components go from 0.0 to 1.0 (inclusive - if in gamut).
-
 -}
 fromOklab : Oklab -> Oklch
 fromOklab { lightness, a, b, alpha } =
@@ -87,9 +108,6 @@ fromOklab { lightness, a, b, alpha } =
 
 
 {-| Convert from Oklch to Oklab.
-
-Input components go from 0.0 to 1.0 (inclusive - if in gamut).
-
 -}
 toOklab : Oklch -> Oklab
 toOklab { lightness, chroma, hue, alpha } =
