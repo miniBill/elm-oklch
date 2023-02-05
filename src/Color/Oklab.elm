@@ -112,6 +112,9 @@ fromLinearRGB { linearRed, linearGreen, linearBlue, alpha } =
 
 
 {-| Converts a color from Oklab to linear RGB (red, green, blue).
+
+The output components get clipped at 0 to avoid NaNs.
+
 -}
 toLinearRGB : Oklab -> LinearRGB
 toLinearRGB { lightness, a, b, alpha } =
@@ -141,7 +144,7 @@ toLinearRGB { lightness, a, b, alpha } =
             s_ * s_ * s_
     in
     { linearRed = 4.0767416621 * lOut - 3.3077115913 * m + 0.2309699292 * s
-    , linearBlue = -1.2684380046 * lOut + 2.6097574011 * m - 0.3413193965 * s
-    , linearGreen = -0.0041960863 * lOut - 0.7034186147 * m + 1.707614701 * s
+    , linearGreen = -1.2684380046 * lOut + 2.6097574011 * m - 0.3413193965 * s
+    , linearBlue = -0.0041960863 * lOut - 0.7034186147 * m + 1.707614701 * s
     , alpha = alpha
     }
