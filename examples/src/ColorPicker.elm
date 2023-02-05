@@ -1,6 +1,10 @@
 module ColorPicker exposing (main)
 
 import Browser
+import Color exposing (Color)
+import Color.LinearRGB exposing (LinearRGB)
+import Color.Oklab exposing (Oklab)
+import Color.Oklch exposing (Oklch)
 import Element exposing (Attribute, Element, Length, alignRight, centerY, column, el, fill, height, px, shrink, table, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
@@ -56,25 +60,49 @@ layoutStyle =
 
 init : Model
 init =
-    linearToModel "10" ( 0, 0, 0 )
+    linearToModel "10" (Color.LinearRGB.linearRgb 0 0 0)
 
 
-linearToModel : String -> Float3 -> Model
+linearToModel : String -> LinearRGB -> Model
 linearToModel paletteCount linearRGB =
     let
-        oklab : Float3
+        oklab : Oklab
         oklab =
-            linearToOklab linearRGB
+            Color.Oklab.fromLinearRGB linearRGB
     in
-    { sRGB = transform linearToSRGB linearRGB
-    , linearRGB = toString3 linearRGB
-    , oklab = toString3 oklab
-    , oklch = transform3 oklabToOklch oklab
+    { sRGB = colorToStrings <| Color.LinearRGB.toColor linearRGB
+    , linearRGB = linearRGBToStrings <| linearRGB
+    , oklab = oklabToStrings <| oklab
+    , oklch = oklchToStrings <| Color.Oklch.fromOklab oklab
     , paletteCount = paletteCount
     }
 
 
-from : String3 -> (Float3 -> Float3) -> Model -> Model
+colorToStrings : Color -> String3
+colorToStrings color =
+    let
+        { red, green, blue } =
+            Color.toRgba color
+    in
+    toStrings red green blue
+
+
+linearRGBToStrings : LinearRGB -> String3
+linearRGBToStrings { linearRed, linearGreen, linearBlue } =
+    toStrings linearRed linearGreen linearBlue
+
+
+oklabToStrings : Oklab -> String3
+oklabToStrings { lightness, a, b } =
+    toStrings lightness a b
+
+
+oklchToStrings : Oklch -> String3
+oklchToStrings { lightness, chroma, hue } =
+    toStrings lightness chroma hue
+
+
+from : String3 -> (Float3 -> LinearRGB) -> Model -> Model
 from input toLinear model =
     case parse input of
         Nothing ->
@@ -89,7 +117,12 @@ fromSRGB sRGBStrings model =
     let
         newModel : Model
         newModel =
-            from sRGBStrings (triple sRGBToLinear) model
+            from sRGBStrings
+                (\( r, g, b ) ->
+                    Color.rgb r g b
+                        |> Color.LinearRGB.fromColor
+                )
+                model
     in
     { newModel | sRGB = sRGBStrings }
 
@@ -99,7 +132,11 @@ fromLinearRGB linearRGBStrings model =
     let
         newModel : Model
         newModel =
-            from linearRGBStrings identity model
+            from linearRGBStrings
+                (\( lr, lg, lb ) ->
+                    Color.LinearRGB.linearRgb lr lg lb
+                )
+                model
     in
     { newModel | linearRGB = linearRGBStrings }
 
@@ -109,7 +146,12 @@ fromOklab oklabStrings model =
     let
         newModel : Model
         newModel =
-            from oklabStrings oklabToLinear model
+            from oklabStrings
+                (\( l, a, b ) ->
+                    Color.Oklab.oklab l a b
+                        |> Color.Oklab.toLinearRGB
+                )
+                model
     in
     { newModel | oklab = oklabStrings }
 
@@ -119,161 +161,32 @@ fromOklch oklchStrings model =
     let
         newModel : Model
         newModel =
-            from oklchStrings (oklchToOklab >> oklabToLinear) model
+            from oklchStrings
+                (\( l, c, h ) ->
+                    Color.Oklch.oklch l c h
+                        |> Color.Oklch.toOklab
+                        |> Color.Oklab.toLinearRGB
+                )
+                model
     in
     { newModel | oklch = oklchStrings }
 
 
-transform : (Float -> Float) -> Float3 -> String3
-transform transformation value =
-    toString3 <| triple transformation value
-
-
-transform3 : (Float3 -> Float3) -> Float3 -> String3
-transform3 transformation value =
-    toString3 <| transformation value
-
-
-toString3 : Float3 -> String3
-toString3 =
-    triple String.fromFloat
+toStrings : Float -> Float -> Float -> String3
+toStrings a b c =
+    ( String.fromFloat a
+    , String.fromFloat b
+    , String.fromFloat c
+    )
 
 
 parse : String3 -> Maybe ( Float, Float, Float )
-parse value =
-    case triple String.toFloat value of
-        ( Just r, Just g, Just b ) ->
-            Just ( r, g, b )
-
-        _ ->
-            Nothing
-
-
-triple : (a -> b) -> ( a, a, a ) -> ( b, b, b )
-triple f ( r, g, b ) =
-    ( f r, f g, f b )
-
-
-sRGBToLinear : Float -> Float
-sRGBToLinear s =
-    -- Higher precision constant from https://entropymine.com/imageworsener/srgbformula/
-    if s <= 0.0404482362771082 then
-        s / 12.92
-
-    else
-        ((s + 0.055) / 1.055) ^ 2.4
-
-
-linearToSRGB : Float -> Float
-linearToSRGB l =
-    -- Higher precision constant from https://entropymine.com/imageworsener/srgbformula/
-    if l <= 0.00313066844250063 then
-        l * 12.92
-
-    else
-        1.055 * l ^ (1 / 2.4) - 0.055
-
-
-linearToOklab : Float3 -> Float3
-linearToOklab ( r, g, b ) =
-    -- https://bottosson.github.io/posts/oklab/
-    let
-        l : Float
-        l =
-            0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b
-
-        m : Float
-        m =
-            0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b
-
-        s : Float
-        s =
-            0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b
-
-        l_ : Float
-        l_ =
-            l ^ (1 / 3)
-
-        m_ : Float
-        m_ =
-            m ^ (1 / 3)
-
-        s_ : Float
-        s_ =
-            s ^ (1 / 3)
-    in
-    ( 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_
-    , 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_
-    , 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_
-    )
-
-
-oklabToLinear : Float3 -> Float3
-oklabToLinear ( l, a, b ) =
-    let
-        l_ : Float
-        l_ =
-            l + 0.3963377774 * a + 0.2158037573 * b
-
-        m_ : Float
-        m_ =
-            l - 0.1055613458 * a - 0.0638541728 * b
-
-        s_ : Float
-        s_ =
-            l - 0.0894841775 * a - 1.291485548 * b
-
-        lOut : Float
-        lOut =
-            l_ * l_ * l_
-
-        m : Float
-        m =
-            m_ * m_ * m_
-
-        s : Float
-        s =
-            s_ * s_ * s_
-    in
-    ( 4.0767416621 * lOut - 3.3077115913 * m + 0.2309699292 * s
-    , -1.2684380046 * lOut + 2.6097574011 * m - 0.3413193965 * s
-    , -0.0041960863 * lOut - 0.7034186147 * m + 1.707614701 * s
-    )
-
-
-oklabToOklch : Float3 -> Float3
-oklabToOklch ( l, a, b ) =
-    let
-        c : Float
-        c =
-            sqrt (a * a + b * b)
-
-        h_ =
-            atan2 b a * 180 / pi
-
-        h : Float
-        h =
-            if h_ < 0 then
-                360 + h_
-
-            else
-                h_
-    in
-    ( l, c, h )
-
-
-oklchToOklab : Float3 -> Float3
-oklchToOklab ( l, c, h ) =
-    let
-        a : Float
-        a =
-            c * cos (degrees h)
-
-        b : Float
-        b =
-            c * sin (degrees h)
-    in
-    ( l, a, b )
+parse ( sr, sg, sb ) =
+    Maybe.map3
+        (\r g b -> ( r, g, b ))
+        (String.toFloat sr)
+        (String.toFloat sg)
+        (String.toFloat sb)
 
 
 view : Model -> Element Msg
@@ -291,13 +204,19 @@ view { sRGB, linearRGB, oklab, oklch, paletteCount } =
             [ { space = "sRGB"
               , labels = ( "R", "G", "B" )
               , toMsg = FromSRGB
-              , styles = [ toStyles "rgb" (\( r, g, b ) -> [ pc r, pc g, pc b ]) sRGB ]
+              , styles = [ toStyles2 sRGB (\( r, g, b ) -> Color.rgb r g b) ]
               , value = sRGB
               }
             , { space = "linear RGB"
               , labels = ( "R", "G", "B" )
               , toMsg = FromLinearRGB
-              , styles = [ toStyles "rgb" (\( r, g, b ) -> [ pc r, pc g, pc b ]) {- Not a typo -} sRGB ]
+              , styles =
+                    [ toStyles2 linearRGB
+                        (\( lr, lg, lb ) ->
+                            Color.LinearRGB.linearRgb lr lg lb
+                                |> Color.LinearRGB.toColor
+                        )
+                    ]
               , value = linearRGB
               }
             , { space = "Oklab"
@@ -305,15 +224,10 @@ view { sRGB, linearRGB, oklab, oklch, paletteCount } =
               , toMsg = FromOklab
               , styles =
                     [ toStyles "oklab" (\( l, a, b ) -> [ pc l, float a, float b ]) oklab
-                    , toStyles "rgb"
-                        (\v ->
-                            let
-                                ( r, g, b ) =
-                                    triple linearToSRGB <| oklabToLinear v
-                            in
-                            [ pc r, pc g, pc b ]
-                        )
-                        oklab
+                    , toStyles2 oklab <|
+                        \( l, a, b ) ->
+                            Color.Oklab.oklab l a b
+                                |> Color.Oklab.toColor
                     ]
               , value = oklab
               }
@@ -321,16 +235,11 @@ view { sRGB, linearRGB, oklab, oklch, paletteCount } =
               , labels = ( "L", "C", "H" )
               , toMsg = FromOklch
               , styles =
-                    [ toStyles "lklch" (\( l, c, h ) -> [ pc l, float c, float h ]) oklch
-                    , toStyles "rgb"
-                        (\v ->
-                            let
-                                ( r, g, b ) =
-                                    triple linearToSRGB <| oklabToLinear <| oklchToOklab v
-                            in
-                            [ pc r, pc g, pc b ]
-                        )
-                        oklch
+                    [ toStyles "oklch" (\( l, c, h ) -> [ pc l, float c, float h ]) oklch
+                    , toStyles2 oklch <|
+                        \( l, c, h ) ->
+                            Color.Oklch.oklch l c h
+                                |> Color.Oklch.toColor
                     ]
               , value = oklch
               }
@@ -341,6 +250,15 @@ view { sRGB, linearRGB, oklab, oklch, paletteCount } =
             |> wrappedRow [ Theme.spacing ]
         , viewPalette paletteCount oklch
         ]
+
+
+toStyles2 : String3 -> (( Float, Float, Float ) -> Color.Color) -> String
+toStyles2 input conversion =
+    input
+        |> parse
+        |> Maybe.withDefault ( 0, 0, 0 )
+        |> conversion
+        |> Color.toCssString
 
 
 viewPalette : String -> String3 -> Element Msg
@@ -366,21 +284,19 @@ viewPalette paletteCount oklch =
             , text = paletteCount
             }
         , case parse oklch of
-            Just ( l, c, _ ) ->
+            Just ( lightness, chroma, _ ) ->
                 List.range 1 paletteCountInt
                     |> List.map
                         (\i ->
                             let
                                 hue =
-                                    toFloat i * 360 / toFloat paletteCountInt
+                                    toFloat i / toFloat paletteCountInt
 
-                                ( r, g, b ) =
-                                    ( l, c, hue )
-                                        |> oklchToOklab
-                                        |> oklabToLinear
-                                        |> triple linearToSRGB
+                                color =
+                                    Color.Oklch.oklch lightness chroma hue
+                                        |> Color.Oklch.toColor
                             in
-                            viewColor { width = px 40, height = px 40 } [ "rgb(" ++ String.join " " [ pc r, pc g, pc b ] ++ ")" ]
+                            viewColor { width = px 40, height = px 40 } [ Color.toCssString color ]
                         )
                     |> wrappedRow
                         [ Theme.spacing
