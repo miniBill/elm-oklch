@@ -1,8 +1,9 @@
 module Bijection exposing (suite)
 
 import Color exposing (Color)
-import Color.LinearRGB exposing (LinearRGB)
+import Color.LinearRGB
 import Color.Oklab
+import Color.Oklch
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer)
 import Test exposing (Test, describe, fuzz)
@@ -12,19 +13,30 @@ suite : Test
 suite =
     describe "Conversion functions are inverse of each other"
         [ describe "Linear RGB"
-            [ fromToColor Color.LinearRGB.fromColor Color.LinearRGB.toColor fuzzLinearRGB <| \{ linearRed, linearGreen, linearBlue } -> ( linearRed, linearGreen, linearBlue )
+            [ fromToColor Color.LinearRGB.fromColor Color.LinearRGB.toColor <|
+                \{ linearRed, linearGreen, linearBlue } -> ( linearRed, linearGreen, linearBlue )
             ]
         , describe "Oklab"
-            [ fromToColor Color.Oklab.fromColor Color.Oklab.toColor fuzzOklab <| \{ lightness, a, b } -> ( lightness, a, b )
+            [ fromToColor Color.Oklab.fromColor Color.Oklab.toColor <|
+                \{ lightness, a, b } -> ( lightness, a, b )
+            ]
+        , describe "Oklch"
+            [ fromToColor Color.Oklch.fromColor Color.Oklch.toColor <|
+                \{ lightness, chroma, hue } -> ( lightness, chroma, hue )
             ]
         ]
 
 
-fromToColor : (Color -> color) -> (color -> Color) -> Fuzzer color -> (color -> ( Float, Float, Float )) -> Test
-fromToColor fromColor toColor fuzzer toFloats =
+fromToColor : (Color -> color) -> (color -> Color) -> (color -> ( Float, Float, Float )) -> Test
+fromToColor fromColor toColor toFloats =
     describe "fromColor/toColor are inverse of each other"
-        [ fuzz fuzzer "toColor >> fromColor === identity" <|
-            \color ->
+        [ fuzz fuzzColor "toColor >> fromColor === identity" <|
+            \c ->
+                let
+                    color : color
+                    color =
+                        fromColor c
+                in
                 color
                     |> toColor
                     |> fromColor
@@ -58,33 +70,14 @@ almostEqual expected actual =
             , \( _, a, _ ) -> a
             , \( _, _, a ) -> a
             ]
-                |> List.map (\f -> Expect.within (Expect.Absolute 0.0001) (f expected) << f)
+                |> List.map (\f -> Expect.within (Expect.Absolute 0.00001) (f expected) << f)
     in
     Expect.all expectations actual
 
 
-
--- Fuzzers --
-
-
 fuzzColor : Fuzzer Color
 fuzzColor =
-    fuzzFloat3 Color.rgb
-
-
-fuzzLinearRGB : Fuzzer LinearRGB
-fuzzLinearRGB =
-    fuzzFloat3 Color.LinearRGB.linearRgb
-
-
-fuzzOklab : Fuzzer Color.Oklab.Oklab
-fuzzOklab =
-    fuzzFloat3 Color.Oklab.oklab
-
-
-fuzzFloat3 : (Float -> Float -> Float -> color) -> Fuzzer color
-fuzzFloat3 f =
-    Fuzz.map3 f
+    Fuzz.map3 Color.rgb
         (Fuzz.floatRange 0 1)
         (Fuzz.floatRange 0 1)
         (Fuzz.floatRange 0 1)
