@@ -3,6 +3,7 @@ module Color.Oklch exposing
     , oklch, oklcha
     , fromColor, toColor
     , fromOklab, toOklab
+    , toCssString
     )
 
 {-|
@@ -22,6 +23,7 @@ module Color.Oklch exposing
 
 @docs fromColor, toColor
 @docs fromOklab, toOklab
+@docs toCssString
 
 -}
 
@@ -141,3 +143,34 @@ toColor : Oklch -> Color
 toColor color =
     toOklab color
         |> Color.Oklab.toColor
+
+
+{-| Converts a color to a string suitable for use in CSS.
+
+    Html.Attributes.style "background-color" (Color.Oklch.toCssString (Color.Oklch.oklch 0.5 0.2 0.5))
+
+Note: the current implementation produces a string in the form `oklch(l% c h)`,
+but this may change in the future, and you should not rely on this implementation detail.
+
+-}
+toCssString : Oklch -> String
+toCssString color =
+    if color.alpha == 1 then
+        "oklch("
+            ++ String.fromFloat (color.lightness * 100)
+            ++ "% "
+            ++ String.fromFloat color.chroma
+            ++ " "
+            ++ String.fromFloat (360 * color.hue)
+            ++ ")"
+
+    else
+        "oklch("
+            ++ String.fromFloat (color.lightness * 100)
+            ++ "% "
+            ++ String.fromFloat color.chroma
+            ++ " "
+            ++ String.fromFloat (360 * color.hue)
+            ++ " / "
+            ++ String.fromFloat color.alpha
+            ++ ")"
