@@ -3,7 +3,7 @@
     "name": "miniBill/elm-oklch",
     "summary": "Conversion functions from and to Oklab and Oklch",
     "license": "BSD-3-Clause",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "exposed-modules": [
         "Color.LinearRGB",
         "Color.Oklab",
